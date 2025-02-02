@@ -49,11 +49,11 @@ Optimize e-commerce sales performance across USA regions
    		WHERE [cost] IS NULL;
 		```
 
-		![before_null_handling](Images/table_transformations/products/cost/before_null_handling.png)
+		![before_null_handling](Images/table_transformations/products/cost/before_null_handling.jpg)
 
-		![null_handling](Images/table_transformations/products/cost/null_handling.png)
+		![null_handling](Images/table_transformations/products/cost/null_handling.jpg)
 
-		![after	_null_handling](Images/table_transformations/products/cost/after_null_handling.png)
+		![after	_null_handling](Images/table_transformations/products/cost/after_null_handling.jpg)
 
 - ***orders and order_items:***
 	               
@@ -75,6 +75,6 @@ Optimize e-commerce sales performance across USA regions
 | inventory_items                  | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
 | order_items                      | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
 | orders                           | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
-| products                         | - [x]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
+| products                         |     ✔      | ❌            | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
 | start_to_end_purchase_events     | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
 | users                            | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
