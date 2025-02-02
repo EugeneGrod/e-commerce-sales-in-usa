@@ -14,10 +14,67 @@
 
 ## Table of Contents
 
-## Business problem
+## Business Problem
 
 Optimize e-commerce sales performance across USA regions
 
-## Data source
+## Data Source
 
 - [Kaggle The eCommerce Business Analysis](https://www.kaggle.com/code/chiraggivan82/thelook-ecommerce)
+
+## Data Cleaning
+
+### SQL Server
+
+- ***distribution_centers:***
+
+      Clean table
+
+- ***products:***
+
+	- **"cost" column**
+    		
+		1. *NULL values*
+		
+		Replace `NULL` values with the average ratio between retail and cost prices  
+
+		```sql
+		WITH [Rate] AS (
+       			SELECT SUM([retail_price]) / SUM([cost]) AS [avg_rate]
+			FROM [e-commerce_sales_in_usa].[dbo].[products]
+   		)
+   		
+		UPDATE [e-commerce_sales_in_usa].[dbo].[products]
+   		SET [cost] = COALESCE([cost], [retail_price] / (SELECT [avg_rate] FROM [Rate]))
+   		WHERE [cost] IS NULL;
+		```
+
+		![before_null_handling](Images/table_transformations/products/cost/before_null_handling.png)
+
+		![null_handling](Images/table_transformations/products/cost/null_handling.png)
+
+		![after	_null_handling](Images/table_transformations/products/cost/after_null_handling.png)
+
+- ***orders and order_items:***
+	               
+      Clean table
+- ***users:***
+
+      Clean table
+- ***inventory_items:***
+
+      Clean table
+- ***events:***
+
+### Data Cleaning Summary
+
+| Table Name                       | NULL's      | Duplicates    | Negative Quantities | Invalid Data Types | Invalid Formats | Foreign Key Violations | Outliers | Missing References | Inconsistent Units or Measures | Missing or Inconsistent Timestamps | Inconsistent Status Codes |
+|:---------------------------------|:-----------:|:-------------:|:-------------------:|:------------------:|:---------------:|:----------------------:|:--------:|:------------------:|:------------------------------:|:----------------------------------:|:-------------------------:|
+| distribution_centers             | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
+| events                           | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
+| inventory_items                  | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
+| order_items                      | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
+| orders                           | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
+| products                         | - [x]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
+| start_to_end_purchase_events     | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
+| users                            | - [ ]       | - [ ]         | - [ ]               | - [ ]              | - [ ]           | - [ ]                  | - [ ]    | - [ ]              | - [ ]                          | - [ ]                              | - [ ]                     |
