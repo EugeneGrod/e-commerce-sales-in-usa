@@ -12,7 +12,7 @@ WITH [Rate] AS (
 
 		-- Step 2: Update the cost column where it is NULL
 UPDATE [e-commerce_sales_in_usa].[dbo].[products]
-SET [cost] = COALESCE([cost], [retail_price] / (SELECT [avg_rate] FROM [Rate]))
+SET [cost] = [retail_price] / (SELECT [avg_rate] FROM [Rate])
 WHERE [cost] IS NULL;
 
 	-- [name] column
@@ -21,7 +21,8 @@ SET name = 'Unnamed'
 WHERE name is NULL;
 
 	-- [brand] column
-		-- Filling null values of brand which can be infered from product name
+		-- Replace NULL values with the brand inferred from the product name,
+		-- and with 'Unbranded' where the brand can't be inferred
 UPDATE products
 SET brand = CASE 
 	WHEN id = 1629 THEN 'Carhartt'
@@ -43,3 +44,50 @@ SET brand = CASE
     ELSE 'Unbranded'
 END
 WHERE brand IS NULL;
+
+-- [inventory_items] table
+	-- [created_at] column
+	BEGIN TRANSACTION
+	UPDATE inventory_items
+	SET created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2)
+
+	ALTER TABLE inventory_items
+	ALTER COLUMN created_at datetime2
+
+	COMMIT;
+
+	-- [sold_at] column
+	BEGIN TRANSACTION
+	UPDATE inventory_items
+	SET sold_at = CAST(REPLACE(sold_at, ' UTC', '') AS datetime2)
+
+	ALTER TABLE inventory_items
+	ALTER COLUMN sold_at datetime2
+
+	COMMIT;
+
+	-- [cost] column
+	SELECT * FROM inventory_items
+	WHERE cost IS NULL;
+
+		-- Replace `NULL` values with the average ratio between retail and cost prices
+		-- Step 1: Calculate the average ratio between retail and cost prices
+	BEGIN TRANSACTION;
+
+		WITH [Rate] AS (
+		SELECT SUM([product_retail_price]) / SUM([cost]) AS [avg_rate]
+		FROM [inventory_items]
+	)
+
+		-- Step 2: Update the cost column where it is NULL
+	UPDATE [inventory_items]
+	SET [cost] = [product_retail_price] / (SELECT [avg_rate] FROM [Rate])
+	WHERE [cost] IS NULL;
+
+	COMMIT;
+	
+-- [users] table
+-- [orders] table
+-- [events] table
+-- [order_items] table
+-- [start_to_end_purchase_events] table

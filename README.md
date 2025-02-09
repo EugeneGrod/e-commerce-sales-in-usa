@@ -156,13 +156,101 @@ COMMIT TRANSACTION;
 | sku                              | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
 | distribution_center_id           | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
 
+- ***inventory_items:***
+
+	- **"created_at" column**
+    		
+		1. *Invalid Data Type*
+		
+		Change column type from nvarchar to datetime2 and update values accordingly
+
+		```sql
+		BEGIN TRANSACTION
+		UPDATE inventory_items
+		SET created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2)
+
+		ALTER TABLE inventory_items
+		ALTER COLUMN created_at datetime2
+
+		COMMIT;
+		```
+
+		![before_null_handling](Images/table_transformations/inventory_items/created_at/before_modyfying_data_type.jpg)
+
+		![after_null_handling](Images/table_transformations/inventory_items/created_at/after_modyfying_data_type.jpg)
+
+	- **"sold_at" column**
+    		
+		1. *Invalid Data Type*
+		
+		Change column type from nvarchar to datetime2 and update values accordingly
+
+		```sql
+		BEGIN TRANSACTION
+		UPDATE inventory_items
+		SET sold_at = CAST(REPLACE(sold_at, ' UTC', '') AS datetime2)
+
+		ALTER TABLE inventory_items
+		ALTER COLUMN sold_at datetime2
+
+		COMMIT;
+		```
+
+		![before_null_handling](Images/table_transformations/inventory_items/sold_at/before_modyfying_data_type.jpg)
+
+		![after_null_handling](Images/table_transformations/inventory_items/sold_at/after_modyfying_data_type.jpg)
+
+	- **"cost" column**
+    		
+		1. *NULL values*
+		
+		Replace `NULL` values with the average ratio between retail and cost prices  
+
+		```sql
+		BEGIN TRANSACTION;
+
+		WITH [Rate] AS (
+		SELECT SUM([product_retail_price]) / SUM([cost]) AS [avg_rate]
+		FROM [inventory_items]
+		)
+
+		UPDATE [inventory_items]
+		SET [cost] = [product_retail_price] / (SELECT [avg_rate] FROM [Rate])
+		WHERE [cost] IS NULL;
+
+		COMMIT;
+		```
+
+		![before_null_handling](Images/table_transformations/inventory_items/cost/before_null_handling.jpg)
+
+		![null_handling](Images/table_transformations/inventory_items/cost/null_handling.jpg)
+
+		![after_null_handling](Images/table_transformations/inventory_items/cost/after_null_handling.jpg)
+
+
+#### 'inventory_items' Table Summary
+
+| Column Name                        | Invalid Data Types | Invalid Formats | NULL's      | Duplicates    | Irrelevant Data |
+|:---------------------------------- | :----------------: | :-------------: | :---------: | :-----------: | :-------------: |
+| id                                 | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| product_id                         | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| created_at                         | ✔                 | ⬜               | ⬜           | ⬜            | ⬜               |
+| sold_at                            | ✔                 | ⬜               | ⬜           | ⬜            | ⬜               |
+| cost                               | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
+| product_category                   | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| product_name                       | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| product_brand                      | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| product_retail_price               | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| product_department                 | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| product_sku                        | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| product_distribution_center_id     | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+
+
+
 - ***orders and order_items:***
 	               
       Clean table
 - ***users:***
-
-      Clean table
-- ***inventory_items:***
 
       Clean table
 - ***events:***
