@@ -84,29 +84,77 @@ COMMIT TRANSACTION;
    		)
    		
 		UPDATE [e-commerce_sales_in_usa].[dbo].[products]
-   		SET [cost] = COALESCE([cost], [retail_price] / (SELECT [avg_rate] FROM [Rate]))
-   		WHERE [cost] IS NULL;
+		SET [cost] = [retail_price] / (SELECT [avg_rate] FROM [Rate])
+		WHERE [cost] IS NULL;
 		```
 
 		![before_null_handling](Images/table_transformations/products/cost/before_null_handling.jpg)
 
-		![null_handling](Images/table_transformations/products/cost/null_handling.jpg)
+		![after_null_handling](Images/table_transformations/products/cost/after_null_handling.jpg)
 
-		![after	_null_handling](Images/table_transformations/products/cost/after_null_handling.jpg)
+	- **"name" column**
+    		
+		1. *NULL values*
+		
+		Replace `NULL` values with `Unnamed`  
+
+		```sql
+		UPDATE products
+		SET name = 'Unnamed'
+		WHERE name is NULL;
+		```
+
+		![before_null_handling](Images/table_transformations/products/name/before_null_handling.jpg)
+
+		![after_null_handling](Images/table_transformations/products/name/after_null_handling.jpg)
+
+	- **"brand" column**
+    		
+		1. *NULL values*
+		
+		Replace `NULL` values with the brand inferred from the product name, and with `Unbranded` where the brand can't be inferred 
+
+		```sql
+		UPDATE products
+		SET brand = CASE 
+			WHEN id = 1629 THEN 'Carhartt'
+			WHEN id = 10598 THEN 'JMS'
+			WHEN id = 11389 THEN 'Shadowline'
+			WHEN id = 11843 THEN 'Wendy Glez'
+			WHEN id = 15723 THEN 'Wayfarer'
+			WHEN id = 16309 THEN 'Hurley'
+			WHEN id = 16559 THEN 'Gildan'
+			WHEN id = 16898 THEN 'Quiksilver'
+			WHEN id = 21207 THEN 'Ariat'
+			WHEN id = 21484 THEN 'True Nation'
+			WHEN id = 23769 THEN 'Stormtech'
+			WHEN id = 24287 THEN 'Adidas'
+			WHEN id = 25135 THEN 'Volcom'
+			WHEN id = 25187 THEN 'SockGuy'
+			WHEN id = 27543 THEN 'Harbor Bay'
+			WHEN id = 27640 THEN 'O''Neill'
+   			ELSE 'Unbranded'
+		END
+		WHERE brand IS NULL;
+		```
+
+		![before_null_handling](Images/table_transformations/products/brand/before_null_handling.jpg)
+
+		![after_null_handling](Images/table_transformations/products/brand/after_null_handling.jpg)
 
 #### 'products' Table Summary
 
-| Column Name                      | NULL's      | Duplicates    | Negative Quantities | Invalid Data Types | Invalid Formats | Foreign Key Violations | Outliers | Missing References | Inconsistent Units or Measures | Missing or Inconsistent Timestamps | Inconsistent Status Codes |
-|:---------------------------------|:-----------:|:-------------:|:-------------------:|:------------------:|:---------------:|:----------------------:|:--------:|:------------------:|:------------------------------:|:----------------------------------:|:-------------------------:|
-| id                               | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| cost                             | ✔          | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| category                         | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| name                             | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| brand                            | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| retail_price                     | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| department                       | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| sku                              | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| distribution_center_id           | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
+| Column Name                      | Invalid Data Types | Invalid Formats | NULL's      | Duplicates    | Irrelevant Data |
+|:---------------------------------| :----------------: | :-------------: | :---------: | :-----------: | :-------------: |
+| id                               | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| cost                             | ⬜                  | ⬜               | ✔          | ⬜             | ⬜              |
+| category                         | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
+| name                             | ⬜                  | ⬜               | ✔          | ⬜             | ⬜              |
+| brand                            | ⬜                  | ⬜               | ✔          | ⬜             | ⬜              |
+| retail_price                     | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
+| department                       | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
+| sku                              | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
+| distribution_center_id           | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
 
 - ***orders and order_items:***
 	               
@@ -118,16 +166,3 @@ COMMIT TRANSACTION;
 
       Clean table
 - ***events:***
-
-### Data Cleaning Summary
-
-| Table Name                       | NULL's      | Duplicates    | Negative Quantities | Invalid Data Types | Invalid Formats | Foreign Key Violations | Outliers | Missing References | Inconsistent Units or Measures | Missing or Inconsistent Timestamps | Inconsistent Status Codes |
-|:---------------------------------|:-----------:|:-------------:|:-------------------:|:------------------:|:---------------:|:----------------------:|:--------:|:------------------:|:------------------------------:|:----------------------------------:|:-------------------------:|
-| distribution_centers             | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| events                           | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| inventory_items                  | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| order_items                      | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| orders                           | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| products                         | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| start_to_end_purchase_events     | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
-| users                            | ⬜           | ⬜             | ⬜                   | ⬜                 | ⬜               | ⬜                      |⬜         | ⬜                  | ⬜                             | ⬜                                  | ⬜                         |
