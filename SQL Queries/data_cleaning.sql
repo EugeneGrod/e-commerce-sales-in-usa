@@ -111,31 +111,107 @@ WHERE brand IS NULL;
 		COMMIT;
 
 -- [users] table
+	-- [city] column
+		-- It was found that 135 postal codes are missing corresponding cities in the users table and contain `NULL` values stored as varchar.
+		SELECT DISTINCT postal_code, city, country FROM users
+		WHERE city LIKE '%null%'
+		ORDER BY postal_code ASC;
+
+		-- Since we have corresponding postal codes for these rows, we can extract the missing data from external sources.
+		-- Most ZIP codes were downloaded from https://download.geonames.org/export/zip/.
+		-- The next step is to extract only the required data using T-SQL and replace the missing values in the city column.
+		-- Since ZIP codes are country-specific and not globally unique, we will perform multiple joins, specifying the particular country each time.
+		SELECT * FROM ZIP
+		WHERE column2 = '30016';
+		
+		BEGIN TRANSACTION;
+
+		UPDATE u
+		SET u.city = z.column4
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'United States'
+		AND z.column1 = 'US';
+
+		COMMIT;
+
+		BEGIN TRANSACTION;
+
+		UPDATE u
+		SET u.city = z.column4
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'Spain'
+		AND z.column1 = 'ES';
+
+		COMMIT;
+
+		BEGIN TRANSACTION;
+
+		UPDATE u
+		SET u.city = z.column4
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'Brasil'
+		AND z.column1 = 'BR';
+
+		COMMIT;
+
+		BEGIN TRANSACTION;
+
+		UPDATE u
+		SET u.city = z.column4
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'Germany'
+		AND z.column1 = 'DE';
+
+		COMMIT;
+
+		-- Replacing the remaining cities that could not be found with 'Unknown'.
+		BEGIN TRANSACTION;
+
+		UPDATE users
+		SET city = 'Unknown'
+		WHERE city LIKE '%null%'
+
+		COMMIT;
+
+		SELECT DISTINCT postal_code, city, country FROM users
+		WHERE city LIKE '%null%';
+
 -- [orders] table
 -- [events] table
 -- [order_items] table
 -- [start_to_end_purchase_events] table
 
-	SELECT TOP 100 product_name FROM inventory_items;
+	
+	SELECT TOP 100 * FROM inventory_items
+	ORDER BY product_sku;
 
-	SELECT DISTINCT product_brand
+
+	SELECT DISTINCT product_distribution_center_id
 	FROM inventory_items
-	ORDER BY product_brand;
+	ORDER BY product_distribution_center_id;
 	
 	SELECT *
 	FROM inventory_items
-	WHERE product_name IS NULL;
+	WHERE product_retail_price IS NULL;
 
-	SELECT ii.product_name, COUNT(*)
+	SELECT product_sku, COUNT(*)
 	FROM inventory_items AS ii
-	GROUP BY ii.product_name
+	GROUP BY product_sku
 	HAVING COUNT(*) > 1
-	ORDER BY ii.product_name;
+	ORDER BY product_sku;
 
-			SELECT DISTINCT ii.product_brand AS product_brand_in_inventory_items, p.brand AS product_brand_in_products
-		FROM inventory_items AS ii
-		JOIN products AS p ON p.id = ii.product_id
-		WHERE ii.product_brand IN (
+	SELECT DISTINCT ii.product_brand AS product_brand_in_inventory_items, p.brand AS product_brand_in_products
+	FROM inventory_items AS ii
+	JOIN products AS p ON p.id = ii.product_id
+	WHERE ii.product_brand IN (
 		'Carhartt'   ,
 		'JMS'		 ,
 		'Shadowline' ,
@@ -152,3 +228,51 @@ WHERE brand IS NULL;
 		'SockGuy'	 ,
 		'Harbor Bay' ,
 		'O''Neill');
+
+		SELECT DISTINCT u.postal_code, u.city, u.country, z.column2 AS postal_code_2, z.column4 AS city_2, z.column1 AS country_2
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'Germany'
+		AND z.column1 = 'DE';
+
+		SELECT postal_code, city, country FROM users
+		WHERE postal_code IN (
+		'12065',
+		'13090',
+		'17015',
+		'18302',
+		'19803',
+		'20112',
+		'20171',
+		'22406',
+		'22407',
+		'22408',
+		'22556',
+		'22602',
+		'23188',
+		'23236',
+		'23693',
+		'27537',
+		'30016',
+		'30028',
+		'30044',
+		'30045',
+		'30093',
+		'30102',
+		'32060',
+		'32092',
+		'32826',
+		'32828',
+		'32940',
+		'33437',
+		'33579',
+		'34476',
+		'34482',
+		'48044',
+		'70706',
+		'77379',
+		'77389',
+		'79706',
+		'88201',
+		'98926');

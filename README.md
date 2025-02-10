@@ -279,9 +279,128 @@ COMMIT TRANSACTION;
 | cost                               | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
 | product_name                       | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
 | product_brand                      | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
+ 
+- ### `users table:`
+
+	- **"city" column**
+    		
+		1. *`null` nvarchar values*
+		
+		It was found that 135 postal codes are missing corresponding cities in the users table and contain `NULL` values stored as varchar.
+
+		```sql
+		SELECT DISTINCT postal_code, city, country FROM users
+		WHERE city LIKE '%null%'
+		ORDER BY postal_code ASC;
+		```
+
+		![before_null_handling](Images/table_transformations/users/city/before_null_handling.jpg)
+
+		Since we have corresponding postal codes for these rows, we can extract the missing data from external sources.
+		Most ZIP codes were downloaded from https://download.geonames.org/export/zip/.
+		The next step is to extract only the required data using T-SQL and replace the missing values in the city column.
+		Since ZIP codes are country-specific and not globally unique, we will perform multiple joins, specifying the particular country each time.
+
+		```sql
+		SELECT * FROM ZIP
+		WHERE column2 = '30016';
+		```
+
+		![zip_codes_are_country_specific](Images/table_transformations/users/city/zip_codes_are_country_specific.jpg)
+
+		```sql
+		BEGIN TRANSACTION;
+
+		UPDATE u
+		SET u.city = z.column4
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'United States'
+		AND z.column1 = 'US';
+
+		COMMIT;
+		```
+		
+		![united_states](Images/table_transformations/users/city/united_states.jpg)
+
+		```sql
+		BEGIN TRANSACTION;
+
+		UPDATE u
+		SET u.city = z.column4
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'Spain'
+		AND z.column1 = 'ES';
+
+		COMMIT;
+		```
+		
+		![spain](Images/table_transformations/users/city/spain.jpg)
+
+		```sql
+		BEGIN TRANSACTION;
+
+		UPDATE u
+		SET u.city = z.column4
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'Brasil'
+		AND z.column1 = 'BR';
+
+		COMMIT;
+		```
+		
+		![brasil](Images/table_transformations/users/city/brasil.jpg)
+
+		```sql
+		BEGIN TRANSACTION;
+
+		UPDATE u
+		SET u.city = z.column4
+		FROM users AS u
+		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
+		WHERE u.city LIKE '%null%'
+		AND u.country = 'Germany'
+		AND z.column1 = 'DE';
+
+		COMMIT;
+		```
+		
+		![germany](Images/table_transformations/users/city/germany.jpg)
+
+		Replacing the remaining cities that could not be found with 'Unknown'.
+
+		```sql
+		BEGIN TRANSACTION;
+
+		UPDATE users
+		SET city = 'Unknown'
+		WHERE city LIKE '%null%'
+
+		COMMIT;
+		```
+		
+		![unknown](Images/table_transformations/users/city/unknown.jpg)
+
+		```sql
+		SELECT DISTINCT postal_code, city, country FROM users
+		WHERE city LIKE '%null%';
+		```
+		
+		![after_null_handling](Images/table_transformations/users/city/after_null_handling.jpg)
+
+#### `users table summary`
+
+| Column Name                        | Invalid Data Types | Invalid Formats | NULL's      | Duplicates    | Irrelevant Data |
+|:---------------------------------- | :----------------: | :-------------: | :---------: | :-----------: | :-------------: |
+| city                               | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
+| created_at                         | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
 
 - ### `orders and order_items table:`
-	               
-- ### `users table:`
+	              
 
 - ### `events table:`
