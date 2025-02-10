@@ -86,8 +86,69 @@ WHERE brand IS NULL;
 
 	COMMIT;
 	
+	-- [product_name] column
+		-- Replace `NULL` values with corresponding values from the `name` column in the `product` table
+		BEGIN TRANSACTION;
+		
+		UPDATE ii
+		SET ii.product_name = p.name
+		FROM inventory_items AS ii
+		JOIN products AS p ON p.id = ii.product_id
+		WHERE ii.product_name IS NULL;
+
+		COMMIT;
+
+	-- [product_brand] column
+		-- Replace `NULL` values with corresponding values from the `brand` column in the `product` table
+		BEGIN TRANSACTION;
+		
+		UPDATE ii
+		SET ii.product_brand = p.brand
+		FROM inventory_items AS ii
+		JOIN products AS p ON p.id = ii.product_id
+		WHERE ii.product_brand IS NULL;
+
+		COMMIT;
+
 -- [users] table
 -- [orders] table
 -- [events] table
 -- [order_items] table
 -- [start_to_end_purchase_events] table
+
+	SELECT TOP 100 product_name FROM inventory_items;
+
+	SELECT DISTINCT product_brand
+	FROM inventory_items
+	ORDER BY product_brand;
+	
+	SELECT *
+	FROM inventory_items
+	WHERE product_name IS NULL;
+
+	SELECT ii.product_name, COUNT(*)
+	FROM inventory_items AS ii
+	GROUP BY ii.product_name
+	HAVING COUNT(*) > 1
+	ORDER BY ii.product_name;
+
+			SELECT DISTINCT ii.product_brand AS product_brand_in_inventory_items, p.brand AS product_brand_in_products
+		FROM inventory_items AS ii
+		JOIN products AS p ON p.id = ii.product_id
+		WHERE ii.product_brand IN (
+		'Carhartt'   ,
+		'JMS'		 ,
+		'Shadowline' ,
+		'Wendy Glez' ,
+		'Wayfarer'	 ,
+		'Hurley'	 ,
+		'Gildan'	 ,
+		'Quiksilver' ,
+		'Ariat'		 ,
+		'True Nation',
+		'Stormtech'	 ,
+		'Adidas'	 ,
+		'Volcom'	 ,
+		'SockGuy'	 ,
+		'Harbor Bay' ,
+		'O''Neill');

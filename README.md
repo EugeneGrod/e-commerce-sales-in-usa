@@ -63,13 +63,13 @@ COMMIT TRANSACTION;
 
 ## Data Cleaning
 
-### SQL Server
+### `Transact-SQL (T-SQL)`
 
-- ***distribution_centers:***
+- ### `distribution_centers table:`
 
       Clean table
 
-- ***products:***
+- ### `products table:`
 
 	- **"cost" column**
     		
@@ -142,21 +142,15 @@ COMMIT TRANSACTION;
 
 		![after_null_handling](Images/table_transformations/products/brand/after_null_handling.jpg)
 
-#### 'products' Table Summary
+#### `products table summary`
 
 | Column Name                      | Invalid Data Types | Invalid Formats | NULL's      | Duplicates    | Irrelevant Data |
 |:---------------------------------| :----------------: | :-------------: | :---------: | :-----------: | :-------------: |
-| id                               | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
 | cost                             | ⬜                  | ⬜               | ✔          | ⬜             | ⬜              |
-| category                         | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
 | name                             | ⬜                  | ⬜               | ✔          | ⬜             | ⬜              |
 | brand                            | ⬜                  | ⬜               | ✔          | ⬜             | ⬜              |
-| retail_price                     | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
-| department                       | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
-| sku                              | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
-| distribution_center_id           | ⬜                  | ⬜               | ⬜           | ⬜             | ⬜              |
 
-- ***inventory_items:***
+- ### `inventory_items table:`
 
 	- **"created_at" column**
     		
@@ -227,30 +221,67 @@ COMMIT TRANSACTION;
 
 		![after_null_handling](Images/table_transformations/inventory_items/cost/after_null_handling.jpg)
 
+	- **"product_name" column**
+    		
+		1. *NULL values*
+		
+		Replace `NULL` values with corresponding values from the `name` column in the `product` table
 
-#### 'inventory_items' Table Summary
+		```sql
+		BEGIN TRANSACTION;
+		
+		UPDATE ii
+		SET ii.product_name = p.name
+		FROM inventory_items AS ii
+		JOIN products AS p ON p.id = ii.product_id
+		WHERE ii.product_name IS NULL;
+
+		COMMIT;
+		```
+
+		![before_null_handling](Images/table_transformations/inventory_items/product_name/before_null_handling.jpg)
+
+		![null_handling](Images/table_transformations/inventory_items/product_name/null_handling.jpg)
+
+		![after_null_handling](Images/table_transformations/inventory_items/product_name/after_null_handling.jpg)
+
+	- **"product_brand" column**
+    		
+		1. *NULL values*
+		
+		Replace `NULL` values with corresponding values from the `brand` column in the `product` table
+
+		```sql
+		BEGIN TRANSACTION;
+		
+		UPDATE ii
+		SET ii.product_brand = p.brand
+		FROM inventory_items AS ii
+		JOIN products AS p ON p.id = ii.product_id
+		WHERE ii.product_brand IS NULL;
+
+		COMMIT;
+		```
+
+		![before_null_handling](Images/table_transformations/inventory_items/product_brand/before_null_handling.jpg)
+
+		![null_handling](Images/table_transformations/inventory_items/product_brand/null_handling.jpg)
+
+		![after_null_handling](Images/table_transformations/inventory_items/product_brand/after_null_handling.jpg)
+
+
+#### `inventory_items table summary`
 
 | Column Name                        | Invalid Data Types | Invalid Formats | NULL's      | Duplicates    | Irrelevant Data |
 |:---------------------------------- | :----------------: | :-------------: | :---------: | :-----------: | :-------------: |
-| id                                 | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
-| product_id                         | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
-| created_at                         | ✔                 | ⬜               | ⬜           | ⬜            | ⬜               |
-| sold_at                            | ✔                 | ⬜               | ⬜           | ⬜            | ⬜               |
+| created_at                         | ✔                 | ✔              | ⬜           | ⬜            | ⬜               |
+| sold_at                            | ✔                 | ✔              | ⬜           | ⬜            | ⬜               |
 | cost                               | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
-| product_category                   | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
-| product_name                       | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
-| product_brand                      | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
-| product_retail_price               | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
-| product_department                 | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
-| product_sku                        | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
-| product_distribution_center_id     | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| product_name                       | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
+| product_brand                      | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
 
-
-
-- ***orders and order_items:***
+- ### `orders and order_items table:`
 	               
-      Clean table
-- ***users:***
+- ### `users table:`
 
-      Clean table
-- ***events:***
+- ### `events table:`
