@@ -393,14 +393,79 @@ COMMIT TRANSACTION;
 		
 		![after_null_handling](Images/table_transformations/users/city/after_null_handling.jpg)
 
+	- **"created_at" column**
+    		
+		1. *Invalid Data Type*
+		
+		Change column type from nvarchar to datetime2 and update values accordingly
+
+		```sql
+		BEGIN TRANSACTION;
+
+		UPDATE users
+		SET created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2)
+
+		ALTER TABLE users
+		ALTER COLUMN created_at datetime2
+
+		COMMIT;
+		```
+
+		![before_modyfying_data_type](Images/table_transformations/users/created_at/before_modyfying_data_type.jpg)
+
+		![after_modyfying_data_type](Images/table_transformations/users/created_at/after_modyfying_data_type.jpg)
+
 #### `users table summary`
 
 | Column Name                        | Invalid Data Types | Invalid Formats | NULL's      | Duplicates    | Irrelevant Data |
 |:---------------------------------- | :----------------: | :-------------: | :---------: | :-----------: | :-------------: |
 | city                               | ⬜                  | ⬜               | ✔          | ⬜            | ⬜               |
-| created_at                         | ⬜                  | ⬜               | ⬜           | ⬜            | ⬜               |
+| created_at                         | ✔                 | ✔              | ⬜           | ⬜            | ⬜               |
 
-- ### `orders and order_items table:`
+- ### `orders table:`
+
+	- **"created_at" column**
+    		
+		1. *Invalid Data Type*
+		
+		Change column type from nvarchar to datetime2 and update values accordingly
+
+		```sql
+		BEGIN TRANSACTION;
+		
+		UPDATE orders
+		SET
+		    created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2),
+		    returned_at = CAST(REPLACE(returned_at, ' UTC', '') AS datetime2),
+		    shipped_at = CAST(REPLACE(shipped_at, ' UTC', '') AS datetime2),
+		    delivered_at = CAST(REPLACE(delivered_at, ' UTC', '') AS datetime2);
+	
+		ALTER TABLE orders
+		ALTER COLUMN created_at datetime2;
+		ALTER TABLE orders
+		ALTER COLUMN returned_at datetime2;
+		ALTER TABLE orders
+		ALTER COLUMN shipped_at datetime2;
+		ALTER TABLE orders
+		ALTER COLUMN delivered_at datetime2;
+	
+		COMMIT;
+		```
+
+		![before_modyfying_data_type](Images/table_transformations/orders/date_columns/before_modyfying_data_type.jpg)
+
+		![after_modyfying_data_type](Images/table_transformations/orders/date_columns/after_modyfying_data_type.jpg)
+
+#### `orders table summary`
+
+| Column Name                        | Invalid Data Types | Invalid Formats | NULL's      | Duplicates    | Irrelevant Data |
+|:---------------------------------- | :----------------: | :-------------: | :---------: | :-----------: | :-------------: |
+| created_at                         | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |
+| returned_at                        | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |
+| shipped_at                         | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |
+| delivered_at                       | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |
+
+- ### `order_items table:`
 	              
 
 - ### `events table:`
