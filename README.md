@@ -424,7 +424,7 @@ COMMIT TRANSACTION;
 
 - ### `orders table:`
 
-	- **"created_at" column**
+	- **"datetime" columns**
     		
 		1. *Invalid Data Type*
 		
@@ -466,6 +466,46 @@ COMMIT TRANSACTION;
 | delivered_at                       | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |
 
 - ### `order_items table:`
-	              
+
+	- **"datetime" columns**
+    		
+		1. *Invalid Data Type*
+		
+		Change column type from nvarchar to datetime2 and update values accordingly
+
+		```sql
+		BEGIN TRANSACTION;
+		
+		UPDATE order_items
+		SET
+		    created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2),
+		    returned_at = CAST(REPLACE(returned_at, ' UTC', '') AS datetime2),
+		    shipped_at = CAST(REPLACE(shipped_at, ' UTC', '') AS datetime2),
+		    delivered_at = CAST(REPLACE(delivered_at, ' UTC', '') AS datetime2);
+	
+		ALTER TABLE order_items
+		ALTER COLUMN created_at datetime2;
+		ALTER TABLE order_items
+		ALTER COLUMN returned_at datetime2;
+		ALTER TABLE order_items
+		ALTER COLUMN shipped_at datetime2;
+		ALTER TABLE order_items
+		ALTER COLUMN delivered_at datetime2;
+	
+		COMMIT;
+		```
+
+		![before_modyfying_data_type](Images/table_transformations/order_items/date_columns/before_modyfying_data_type.jpg)
+
+		![after_modyfying_data_type](Images/table_transformations/order_items/date_columns/after_modyfying_data_type.jpg)
+
+#### `order_items table summary`
+
+| Column Name                        | Invalid Data Types | Invalid Formats | NULL's      | Duplicates    | Irrelevant Data |
+|:---------------------------------- | :----------------: | :-------------: | :---------: | :-----------: | :-------------: |
+| created_at                         | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |
+| returned_at                        | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |
+| shipped_at                         | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |
+| delivered_at                       | ✔                 | ✔              | ⬜           | ⬜             | ⬜               |              
 
 - ### `events table:`
