@@ -127,7 +127,7 @@ WHERE brand IS NULL;
 		BEGIN TRANSACTION;
 
 		UPDATE u
-		SET u.city = z.column4
+		SET u.city = z.column3
 		FROM users AS u
 		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
 		WHERE u.city LIKE '%null%'
@@ -139,7 +139,7 @@ WHERE brand IS NULL;
 		BEGIN TRANSACTION;
 
 		UPDATE u
-		SET u.city = z.column4
+		SET u.city = z.column3
 		FROM users AS u
 		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
 		WHERE u.city LIKE '%null%'
@@ -151,7 +151,7 @@ WHERE brand IS NULL;
 		BEGIN TRANSACTION;
 
 		UPDATE u
-		SET u.city = z.column4
+		SET u.city = z.column3
 		FROM users AS u
 		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
 		WHERE u.city LIKE '%null%'
@@ -163,7 +163,7 @@ WHERE brand IS NULL;
 		BEGIN TRANSACTION;
 
 		UPDATE u
-		SET u.city = z.column4
+		SET u.city = z.column3
 		FROM users AS u
 		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
 		WHERE u.city LIKE '%null%'
@@ -184,95 +184,117 @@ WHERE brand IS NULL;
 		SELECT DISTINCT postal_code, city, country FROM users
 		WHERE city LIKE '%null%';
 
+	-- [created_at] column
+	BEGIN TRANSACTION;
+
+	UPDATE users
+	SET created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2)
+
+	ALTER TABLE users
+	ALTER COLUMN created_at datetime2
+
+	COMMIT;
+
 -- [orders] table
--- [events] table
+	-- [datetype columns]
+	BEGIN TRANSACTION;
+	
+	UPDATE orders
+	SET
+	    created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2),
+	    returned_at = CAST(REPLACE(returned_at, ' UTC', '') AS datetime2),
+	    shipped_at = CAST(REPLACE(shipped_at, ' UTC', '') AS datetime2),
+	    delivered_at = CAST(REPLACE(delivered_at, ' UTC', '') AS datetime2);
+	
+	ALTER TABLE orders
+	ALTER COLUMN created_at datetime2;
+	ALTER TABLE orders
+	ALTER COLUMN returned_at datetime2;
+	ALTER TABLE orders
+	ALTER COLUMN shipped_at datetime2;
+	ALTER TABLE orders
+	ALTER COLUMN delivered_at datetime2;
+	
+	COMMIT;
+
 -- [order_items] table
--- [start_to_end_purchase_events] table
-
+	-- [datetype columns]
+	BEGIN TRANSACTION;
 	
-	SELECT TOP 100 * FROM inventory_items
-	ORDER BY product_sku;
-
-
-	SELECT DISTINCT product_distribution_center_id
-	FROM inventory_items
-	ORDER BY product_distribution_center_id;
+	UPDATE order_items
+	SET
+	    created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2),
+	    returned_at = CAST(REPLACE(returned_at, ' UTC', '') AS datetime2),
+	    shipped_at = CAST(REPLACE(shipped_at, ' UTC', '') AS datetime2),
+	    delivered_at = CAST(REPLACE(delivered_at, ' UTC', '') AS datetime2);
 	
-	SELECT *
-	FROM inventory_items
-	WHERE product_retail_price IS NULL;
+	ALTER TABLE order_items
+	ALTER COLUMN created_at datetime2;
+	ALTER TABLE order_items
+	ALTER COLUMN returned_at datetime2;
+	ALTER TABLE order_items
+	ALTER COLUMN shipped_at datetime2;
+	ALTER TABLE order_items
+	ALTER COLUMN delivered_at datetime2;
+	
+	COMMIT;
 
-	SELECT product_sku, COUNT(*)
-	FROM inventory_items AS ii
-	GROUP BY product_sku
-	HAVING COUNT(*) > 1
-	ORDER BY product_sku;
+-- [events] table
+	-- [city] column	
+		-- It was found that 142 postal codes in the events table are missing corresponding cities and contain NULL values stored as VARCHAR.
+		-- We will apply the same solution as we did for the users table.
+		BEGIN TRANSACTION;
 
-	SELECT DISTINCT ii.product_brand AS product_brand_in_inventory_items, p.brand AS product_brand_in_products
-	FROM inventory_items AS ii
-	JOIN products AS p ON p.id = ii.product_id
-	WHERE ii.product_brand IN (
-		'Carhartt'   ,
-		'JMS'		 ,
-		'Shadowline' ,
-		'Wendy Glez' ,
-		'Wayfarer'	 ,
-		'Hurley'	 ,
-		'Gildan'	 ,
-		'Quiksilver' ,
-		'Ariat'		 ,
-		'True Nation',
-		'Stormtech'	 ,
-		'Adidas'	 ,
-		'Volcom'	 ,
-		'SockGuy'	 ,
-		'Harbor Bay' ,
-		'O''Neill');
+		UPDATE e
+		SET e.city = z.column3
+		FROM [events] AS e
+		LEFT JOIN ZIP AS z ON e.postal_code = z.column2
+		WHERE e.city LIKE '%null%'
+		AND e.state = z.column4;
 
-		SELECT DISTINCT u.postal_code, u.city, u.country, z.column2 AS postal_code_2, z.column4 AS city_2, z.column1 AS country_2
-		FROM users AS u
-		LEFT JOIN ZIP AS z ON u.postal_code = z.column2
-		WHERE u.city LIKE '%null%'
-		AND u.country = 'Germany'
-		AND z.column1 = 'DE';
+		COMMIT;
 
-		SELECT postal_code, city, country FROM users
-		WHERE postal_code IN (
-		'12065',
-		'13090',
-		'17015',
-		'18302',
-		'19803',
-		'20112',
-		'20171',
-		'22406',
-		'22407',
-		'22408',
-		'22556',
-		'22602',
-		'23188',
-		'23236',
-		'23693',
-		'27537',
-		'30016',
-		'30028',
-		'30044',
-		'30045',
-		'30093',
-		'30102',
-		'32060',
-		'32092',
-		'32826',
-		'32828',
-		'32940',
-		'33437',
-		'33579',
-		'34476',
-		'34482',
-		'48044',
-		'70706',
-		'77379',
-		'77389',
-		'79706',
-		'88201',
-		'98926');
+		BEGIN TRANSACTION;
+
+		UPDATE [events]
+		SET city = 'Unknown'
+		WHERE city LIKE '%null%'
+
+		COMMIT;
+
+		SELECT * FROM [events]
+		WHERE city LIKE 'null';
+
+-- DELETE in the end
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, IS_NULLABLE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME LIKE 'events';
+
+DROP TABLE users;
+
+ALTER TABLE order_items
+DROP CONSTRAINT FK_order_items_users;
+
+ALTER TABLE [order_items]
+ADD CONSTRAINT FK_order_items_users
+FOREIGN KEY ([user_id]) REFERENCES [users]([id]);
+
+ALTER TABLE [events]
+ADD CONSTRAINT FK_events_users
+FOREIGN KEY ([user_id]) REFERENCES [users]([id]);
+
+ALTER TABLE [orders]
+ADD CONSTRAINT FK_orders_users
+FOREIGN KEY ([user_id]) REFERENCES [users]([id]);
+
+
+-- Return ALL FKs
+SELECT
+    f.name AS ForeignKeyName,
+    OBJECT_NAME(f.parent_object_id) AS TableName,
+    COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
+    OBJECT_NAME(f.referenced_object_id) AS ReferencedTable,
+    COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS ReferencedColumn
+FROM sys.foreign_keys AS f
+JOIN sys.foreign_key_columns AS fc
+    ON f.object_id = fc.constraint_object_id;
