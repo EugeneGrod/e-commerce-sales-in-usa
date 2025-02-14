@@ -262,39 +262,6 @@ WHERE brand IS NULL;
 
 		COMMIT;
 
-		SELECT * FROM [events]
+		SELECT postal_code, city, state
+		FROM [events]
 		WHERE city LIKE 'null';
-
--- DELETE in the end
-SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, IS_NULLABLE
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME LIKE 'events';
-
-DROP TABLE users;
-
-ALTER TABLE order_items
-DROP CONSTRAINT FK_order_items_users;
-
-ALTER TABLE [order_items]
-ADD CONSTRAINT FK_order_items_users
-FOREIGN KEY ([user_id]) REFERENCES [users]([id]);
-
-ALTER TABLE [events]
-ADD CONSTRAINT FK_events_users
-FOREIGN KEY ([user_id]) REFERENCES [users]([id]);
-
-ALTER TABLE [orders]
-ADD CONSTRAINT FK_orders_users
-FOREIGN KEY ([user_id]) REFERENCES [users]([id]);
-
-
--- Return ALL FKs
-SELECT
-    f.name AS ForeignKeyName,
-    OBJECT_NAME(f.parent_object_id) AS TableName,
-    COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
-    OBJECT_NAME(f.referenced_object_id) AS ReferencedTable,
-    COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS ReferencedColumn
-FROM sys.foreign_keys AS f
-JOIN sys.foreign_key_columns AS fc
-    ON f.object_id = fc.constraint_object_id;
