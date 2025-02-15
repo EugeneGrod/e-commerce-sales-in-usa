@@ -46,26 +46,6 @@ END
 WHERE brand IS NULL;
 
 -- [inventory_items] table
-	-- [created_at] column
-	BEGIN TRANSACTION
-	UPDATE inventory_items
-	SET created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2)
-
-	ALTER TABLE inventory_items
-	ALTER COLUMN created_at datetime2
-
-	COMMIT;
-
-	-- [sold_at] column
-	BEGIN TRANSACTION
-	UPDATE inventory_items
-	SET sold_at = CAST(REPLACE(sold_at, ' UTC', '') AS datetime2)
-
-	ALTER TABLE inventory_items
-	ALTER COLUMN sold_at datetime2
-
-	COMMIT;
-
 	-- [cost] column
 	SELECT * FROM inventory_items
 	WHERE cost IS NULL;
@@ -108,6 +88,110 @@ WHERE brand IS NULL;
 		JOIN products AS p ON p.id = ii.product_id
 		WHERE ii.product_brand IS NULL;
 
+		COMMIT;
+
+	-- [created_at] column
+	BEGIN TRANSACTION
+	UPDATE inventory_items
+	SET created_at = CAST(REPLACE(created_at, ' UTC', '') AS datetime2)
+
+	ALTER TABLE inventory_items
+	ALTER COLUMN created_at datetime2
+
+	COMMIT;
+
+	-- [sold_at] column
+		-- Convert 'sold_at' column from string format to datetime2  
+		-- Remove ' UTC' from existing values  
+		-- Update the column data type to datetime2  
+		BEGIN TRANSACTION
+		UPDATE inventory_items
+		SET sold_at = CAST(REPLACE(sold_at, ' UTC', '') AS datetime2)
+
+		ALTER TABLE inventory_items
+		ALTER COLUMN sold_at datetime2
+
+		COMMIT;
+
+		-- Investigate the relationship between 'sold_at' and the 'orders' table  
+		-- The 'inventory_items' table represents warehouse inventory  
+		-- The 'sold_at' column is NOT directly related to the 'orders' table  
+		-- It does not align with 'created_at' or 'shipped_at' in 'orders'  
+		-- Identify unsold items 
+		SELECT COUNT(*) AS werent_sold_in_total
+		FROM inventory_items AS ii
+		JOIN order_items AS oi ON ii.id = oi.inventory_item_id
+		JOIN orders AS o ON oi.order_id = o.id
+		WHERE ii.sold_at IS NULL;
+
+		-- Identify items that were ordered but not sold  
+		SELECT COUNT(*) AS werent_sold_but_were_ordered_in_total
+		FROM inventory_items AS ii
+		JOIN order_items AS oi ON ii.id = oi.inventory_item_id
+		JOIN orders AS o ON oi.order_id = o.id
+		WHERE ii.sold_at IS NULL
+		AND o.created_at IS NOT NULL;
+		-- werent_sold_and_were_ordered_in_total screenshot
+
+		-- Identify items that were ordered and shipped but never marked as sold 
+		SELECT COUNT(*) werent_sold_but_were_ordered_and_shipped_in_total
+		FROM inventory_items AS ii
+		JOIN order_items AS oi ON ii.id = oi.inventory_item_id
+		JOIN orders AS o ON oi.order_id = o.id
+		WHERE ii.sold_at IS NULL
+		AND o.created_at IS NOT NULL
+		AND o.shipped_at IS NOT NULL;
+
+		-- Calculate the percentage of inconsistent data  
+		WITH
+			CTE_1 AS (
+			SELECT COUNT(*) AS werent_sold_and_were_ordered_in_total
+			FROM inventory_items AS ii
+			JOIN order_items AS oi ON ii.id = oi.inventory_item_id
+			JOIN orders AS o ON oi.order_id = o.id
+			WHERE ii.sold_at IS NULL
+			AND o.created_at IS NOT NULL),
+
+			CTE_2 AS (
+			SELECT COUNT(*) werent_sold_but_were_ordered_and_shipped_in_total
+			FROM inventory_items AS ii
+			JOIN order_items AS oi ON ii.id = oi.inventory_item_id
+			JOIN orders AS o ON oi.order_id = o.id
+			WHERE ii.sold_at IS NULL
+			AND o.created_at IS NOT NULL
+			AND o.shipped_at IS NOT NULL)
+		
+		SELECT (werent_sold_but_were_ordered_and_shipped_in_total * 1.0 / werent_sold_and_were_ordered_in_total) * 100 AS pct_of_wrong_data
+		FROM CTE_1, CTE_2;
+		-- pct_of_wrong_data screenshot
+
+		-- Conclusion:
+		-- At least **65%** of the records in 'sold_at' are inconsistent.
+		-- The 'sold_at' column data **cannot be trusted**.  
+		-- The safest decision is to **drop the 'inventory_items' table** since its data integrity is compromised.  
+		-- Identify foreign key dependencies before dropping the table
+		SELECT
+		    f.name AS ForeignKeyName,
+		    OBJECT_NAME(f.parent_object_id) AS TableName,
+		    COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
+		    OBJECT_NAME(f.referenced_object_id) AS ReferencedTable,
+		    COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS ReferencedColumn
+		FROM sys.foreign_keys AS f
+		JOIN sys.foreign_key_columns AS fc
+		    ON f.object_id = fc.constraint_object_id
+		WHERE OBJECT_NAME(f.parent_object_id) = 'inventory_items'
+		OR OBJECT_NAME(f.referenced_object_id) = 'inventory_items'
+		-- references screenshot
+	
+		-- Drop foreign keys and the 'inventory_items' table  
+		BEGIN TRANSACTION;
+
+		ALTER TABLE inventory_items
+		DROP CONSTRAINT FK_inventory_items_products;
+		ALTER TABLE order_items
+		DROP CONSTRAINT FK_order_items_inventory_items;
+		DROP TABLE inventory_items;
+		
 		COMMIT;
 
 -- [users] table
