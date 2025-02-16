@@ -129,11 +129,107 @@ WHERE TABLE_NAME LIKE 'order_items';
 		FROM INFORMATION_SCHEMA.COLUMNS
 		WHERE TABLE_NAME LIKE 'order_items';
 
+	-- Bad Schema Design in orders Table  
+		-- The num_of_item column in orders is redundant and prone to inconsistencies  
+		-- because the orders table has a one-to-many relationship with users, while  
+		-- order_items establishes a many-to-many relationship between orders and products.  
+		-- It doesn't track product-specific quantities and duplicates data already available in order_items.  
+		-- Fixing it by removing num_of_item from orders and adding quantity to order_items for proper tracking.  
+	
+	BEGIN TRANSACTION;
+
+	ALTER TABLE orders
+	DROP COLUMN num_of_item;
+	ALTER TABLE order_items
+	ADD quantity INT;
+
+	COMMIT;
+
+	-- Identifying redundancy in the order_items table by partitioning rows with the same order_id and product_id.
+	-- The query with ROW_NUMBER() helps detect duplicate entries for the same product in an order.
+	-- The second query checks specific order IDs to highlight any redundant product entries in those orders.
+	
+	WITH CTE AS (
+	    SELECT
+	        ROW_NUMBER() OVER (PARTITION BY order_id, product_id ORDER BY order_id) as RN,
+	        order_id,
+	        product_id,
+			quantity
+	    FROM order_items)
+	
+	SELECT RN, order_id, product_id, quantity
+	FROM CTE
+	WHERE RN > 1;
+	
+	SELECT order_id, product_id, quantity FROM order_items
+	JOIN ORDERS ON order_items.order_id = orders.id
+	WHERE order_id = 62658
+	OR order_id = 34947
+	OR order_id = 62658
+	OR order_id = 102281
+	OR order_id = 22593
+	OR order_id = 96038
+	OR order_id = 10236
+	OR order_id = 25056
+	OR order_id = 111622
+	ORDER BY order_id, product_id;
+
+	-- Lets's return unique pairs of order_id and product_id, 
+	-- and assign the quantity by finding the maximum row number 
+	-- within each partition of order_id and product_id, representing 
+	-- the total quantity of each product in an order.
+	BEGIN TRANSACTION;
+	
+	WITH CTE AS (
+	    SELECT
+	        order_id,
+	        product_id,
+	        COUNT(*) AS quantity 
+	    FROM order_items
+	    GROUP BY order_id, product_id)
+
+	UPDATE oi
+	SET oi.quantity = CTE.quantity
+	FROM order_items oi
+	JOIN CTE ON oi.order_id = CTE.order_id AND oi.product_id = CTE.product_id;
+
+	COMMIT;
+
+	-- Now we delete all rows where the row number (RN) is greater than 1, effectively removing duplicate entries
+	BEGIN TRANSACTION;
+
+	WITH CTE AS (
+	    SELECT
+	        id,
+	        ROW_NUMBER() OVER (PARTITION BY order_id, product_id ORDER BY order_id) AS RN
+	    FROM order_items)
+
+	DELETE oi
+	FROM order_items oi
+	JOIN CTE ON oi.id = CTE.id
+	WHERE CTE.RN > 1;
+
+	COMMIT;
+
+	SELECT order_id, product_id, quantity FROM order_items
+	JOIN ORDERS ON order_items.order_id = orders.id
+	WHERE order_id = 62658
+	OR order_id = 34947
+	OR order_id = 62658
+	OR order_id = 102281
+	OR order_id = 22593
+	OR order_id = 96038
+	OR order_id = 10236
+	OR order_id = 25056
+	OR order_id = 111622
+	ORDER BY order_id, product_id;
+
 -- WHAT TO FIX
 -- num_of_item in order 
 -- make a documentation about new table 
 -- add product category table (violation of normalization)
 -- redundancy in events table
+-- BigQuery + check documentation time choise
 
 
 

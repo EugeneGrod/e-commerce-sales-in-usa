@@ -211,7 +211,7 @@ COMMIT TRANSACTION;
 
 	- **More 3NF Violation:**
 
-		1. The order_items table contains additional <b>transitive functional dependencies</b>.
+		The order_items table contains additional <b>transitive functional dependencies</b>.
 		The `status` and `user_id` columns are <b>not functionally dependent on the primary key</b> (id), but instead on the foreign keys (`order_id`, `user_id`).
 		Since we have a foreign key constraint `FK_order_items_users`, we need to drop the constraint before removing these columns.
 		
@@ -257,7 +257,7 @@ COMMIT TRANSACTION;
 
 	- **Even more 3NF Violation:**
 
-		1. Checking for redundancy in the 'sale_price' column of 'order_items' table.
+		Checking for redundancy in the 'sale_price' column of 'order_items' table.
 		
 		```sql
 		WITH  
@@ -295,6 +295,117 @@ COMMIT TRANSACTION;
 		```
 
 		![after_3nf_violation_fix_2](Images/tables_normalization/order_items/after_3nf_violation_fix_2.jpg)
+
+	- **Bad Schema Design in orders Table:**
+
+		The num_of_item column in orders is redundant and prone to inconsistencies  
+		because the `orders table` has a `one-to-many relationship` with users, while  
+		`order_items` establishes a `many-to-many relationship` between orders and products.  
+		It doesn't track product-specific quantities and duplicates data already available in order_items.  
+		Fixing it by removing num_of_item from orders and adding quantity to order_items for proper tracking.  
+
+		
+		```sql
+		BEGIN TRANSACTION;
+
+		ALTER TABLE orders
+		DROP COLUMN num_of_item;
+		ALTER TABLE order_items
+		ADD quantity INT;
+
+		COMMIT;
+		```
+
+		Identifying redundancy in the order_items table by partitioning rows with the same order_id and product_id.
+		The query with ROW_NUMBER() helps detect duplicate entries for the same product in an order.
+		The second query checks specific order IDs to highlight any redundant product entries in those orders.
+	
+		```sql
+		WITH CTE AS (
+	    		SELECT
+	        	ROW_NUMBER() OVER (PARTITION BY order_id, product_id ORDER BY order_id) as RN,
+	        	order_id,
+	        	product_id
+	    	FROM order_items)
+	
+		SELECT RN, order_id, product_id
+		FROM CTE
+		WHERE RN > 1;
+	
+		SELECT order_id, product_id FROM order_items
+		JOIN ORDERS ON order_items.order_id = orders.id
+		WHERE order_id = 62658
+		OR order_id = 34947
+		OR order_id = 62658
+		OR order_id = 102281
+		OR order_id = 22593
+		OR order_id = 96038
+		OR order_id = 10236
+		OR order_id = 25056
+		OR order_id = 111622
+		ORDER BY order_id, product_id;
+		```
+
+		![highlight](Images/tables_normalization/order_items/highlight.jpg)
+
+		Returning unique pairs of order_id and product_id, 
+		and assigning the quantity by finding the maximum row number 
+		within each partition of order_id and product_id, representing 
+		the total quantity of each product in an order.
+
+		```sql
+		BEGIN TRANSACTION;
+	
+		WITH CTE AS (
+		    SELECT
+			order_id,
+	 		product_id,
+	   		COUNT(*) AS quantity 
+	 	FROM order_items
+	  	GROUP BY order_id, product_id)
+
+		UPDATE oi
+		SET oi.quantity = CTE.quantity
+		FROM order_items oi
+		JOIN CTE ON oi.order_id = CTE.order_id AND oi.product_id = CTE.product_id;
+
+		COMMIT;
+		```
+
+		![quantity_update](Images/tables_normalization/order_items/quantity_update.jpg)
+
+		Now we delete all rows where the row number (RN) is greater than 1, effectively removing duplicate entries
+		
+		```sql
+		BEGIN TRANSACTION;
+
+		WITH CTE AS (
+			SELECT
+	  		id,
+	    		ROW_NUMBER() OVER (PARTITION BY order_id, product_id ORDER BY order_id) AS RN
+		FROM order_items)
+	
+		DELETE oi
+		FROM order_items oi
+		JOIN CTE ON oi.id = CTE.id
+		WHERE CTE.RN > 1;
+
+		COMMIT;
+		```
+
+		![redundancy_removed](Images/tables_normalization/order_items/redundancy_removed.jpg)
+
+		Checking the result 
+		
+		```sql
+		SELECT order_id, product_id, quantity 
+		FROM order_items
+		JOIN ORDERS ON order_items.order_id = orders.id
+		WHERE order_id IN (62658, 34947, 102281, 22593, 96038, 10236, 25056, 111622)
+		ORDER BY order_id, product_id;
+		```
+			
+		![after_removing](Images/tables_normalization/order_items/after_removing.jpg)
 
 <h2 id="data-cleaning" align="center">
     <pre>Data Cleaning
