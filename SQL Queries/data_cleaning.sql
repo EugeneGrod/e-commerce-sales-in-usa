@@ -131,7 +131,6 @@ WHERE brand IS NULL;
 		JOIN orders AS o ON oi.order_id = o.id
 		WHERE ii.sold_at IS NULL
 		AND o.created_at IS NOT NULL;
-		-- werent_sold_and_were_ordered_in_total screenshot
 
 		-- Identify items that were ordered and shipped but never marked as sold 
 		SELECT COUNT(*) werent_sold_but_were_ordered_and_shipped_in_total
@@ -163,7 +162,6 @@ WHERE brand IS NULL;
 		
 		SELECT (werent_sold_but_were_ordered_and_shipped_in_total * 1.0 / werent_sold_and_were_ordered_in_total) * 100 AS pct_of_wrong_data
 		FROM CTE_1, CTE_2;
-		-- pct_of_wrong_data screenshot
 
 		-- Conclusion:
 		-- At least **65%** of the records in 'sold_at' are inconsistent.
@@ -181,9 +179,8 @@ WHERE brand IS NULL;
 		    ON f.object_id = fc.constraint_object_id
 		WHERE OBJECT_NAME(f.parent_object_id) = 'inventory_items'
 		OR OBJECT_NAME(f.referenced_object_id) = 'inventory_items'
-		-- references screenshot
 	
-		-- Drop foreign keys and the 'inventory_items' table  
+		-- Remove foreign key constraints, drop the 'inventory_items' table, and delete related column from 'order_items'
 		BEGIN TRANSACTION;
 
 		ALTER TABLE inventory_items
@@ -191,6 +188,8 @@ WHERE brand IS NULL;
 		ALTER TABLE order_items
 		DROP CONSTRAINT FK_order_items_inventory_items;
 		DROP TABLE inventory_items;
+		ALTER TABLE order_items
+		DROP COLUMN inventory_item_id;
 		
 		COMMIT;
 

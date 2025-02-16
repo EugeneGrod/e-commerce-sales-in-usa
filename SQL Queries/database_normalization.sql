@@ -79,8 +79,7 @@ SELECT
 FROM sys.foreign_keys AS f
 JOIN sys.foreign_key_columns AS fc
     ON f.object_id = fc.constraint_object_id
-WHERE OBJECT_NAME(f.parent_object_id) = 'order_items'
-AND COL_NAME(fc.parent_object_id, fc.parent_column_id) = 'user_id';
+WHERE OBJECT_NAME(f.parent_object_id) = 'inventory_items'
 
 BEGIN TRANSACTION;
 
@@ -97,9 +96,40 @@ SELECT TABLE_NAME, COLUMN_NAME
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME LIKE 'order_items';
 
+	-- Even more 3NF Violation
+		-- Checking for redundancy in the 'sale_price' column of 'order_items' table  
+		WITH  
+		    CTE_TotalRows AS (  
+		        SELECT COUNT(*) AS total_rows  
+		        FROM order_items AS oi  
+		        JOIN products AS p ON oi.product_id = p.id  
+		    ),  
+		
+		    CTE_RedundantRows AS (  
+		        SELECT COUNT(*) AS redundant_rows  
+		        FROM order_items AS oi  
+		        JOIN products AS p ON oi.product_id = p.id  
+		        WHERE oi.sale_price = p.retail_price  
+		    )  
+		
+		SELECT  
+		    total_rows,  
+		    redundant_rows,  
+		    FLOOR((redundant_rows * 100.0 / NULLIF(total_rows, 0))) AS redundancy_percentage  
+		FROM CTE_TotalRows, CTE_RedundantRows;
+		
+		BEGIN TRANSACTION;
+		
+		ALTER TABLE order_items
+		DROP COLUMN sale_price
+		
+		COMMIT;
+		
+		SELECT TABLE_NAME, COLUMN_NAME
+		FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_NAME LIKE 'order_items';
+
 -- WHAT TO FIX
--- sold_at is NULL but the poducts were delivered
--- created at/sold_at in inventory_items doesnt match with created_at in order_items 
 -- num_of_item in order 
 -- make a documentation about new table 
 -- add product category table (violation of normalization)

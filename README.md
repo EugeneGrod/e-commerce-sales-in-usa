@@ -187,6 +187,8 @@ COMMIT TRANSACTION;
 	FROM order_items AS oi
 	JOIN orders AS o ON o.id = oi.order_id;
 
+	SELECT 
+
 	BEGIN TRANSACTION;
 
 	ALTER TABLE order_items
@@ -249,6 +251,41 @@ COMMIT TRANSACTION;
 		DROP COLUMN
 			user_id,
 			status;
+
+		COMMIT;
+		```
+
+	- **Even more 3NF Violation:**
+
+		1. Checking for redundancy in the 'sale_price' column of 'order_items' table.
+		
+		```sql
+		WITH  
+		    CTE_TotalRows AS (  
+        		SELECT COUNT(*) AS total_rows  
+        		FROM order_items AS oi  
+        		JOIN products AS p ON oi.product_id = p.id),  
+
+		    CTE_RedundantRows AS (  
+        		SELECT COUNT(*) AS redundant_rows  
+        		FROM order_items AS oi  
+        		JOIN products AS p ON oi.product_id = p.id  
+        		WHERE oi.sale_price = p.retail_price)
+		
+		SELECT  
+    			total_rows,  
+    			redundant_rows,  
+    			FLOOR((redundant_rows * 100.0 / NULLIF(total_rows, 0))) AS redundancy_percentage  
+			FROM CTE_TotalRows, CTE_RedundantRows;
+		```
+
+		![even_more_3nf_violation](Images/tables_normalization/order_items/even_more_3nf_violation.jpg)
+		
+		```sql
+		BEGIN TRANSACTION;
+
+		ALTER TABLE order_items
+		DROP COLUMN sale_price
 
 		COMMIT;
 
@@ -561,7 +598,7 @@ Transact-SQL (T-SQL)</pre>
 
 		![references](Images/table_transformations/inventory_items/sold_at/references.jpg)	
 	
-		<b>Drop foreign keys and the 'inventory_items' table:</b>
+		<b>Remove foreign key constraints, drop the `inventory_items` table, and delete related column from `order_items`:</b>
 		```sql
 		BEGIN TRANSACTION;
 
@@ -570,6 +607,8 @@ Transact-SQL (T-SQL)</pre>
 		ALTER TABLE order_items
 		DROP CONSTRAINT FK_order_items_inventory_items;
 		DROP TABLE inventory_items;
+		ALTER TABLE order_items
+		DROP COLUMN inventory_item_id;
 		
 		COMMIT;
 		```
