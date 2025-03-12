@@ -35,7 +35,7 @@ Optimize e-commerce sales performance across USA regions
 
 ## Data Source
 
-- [Kaggle The eCommerce Business Analysis](https://www.kaggle.com/code/chiraggivan82/thelook-ecommerce)
+- [BigQuery Public Data "theLook eCommerce"](https://console.cloud.google.com/marketplace/product/bigquery-public-data/thelook-ecommerce?inv=1&invt=Abr2Jg&project=project-1-448819&supportedpurview=project)
 
 <h2 id="initital_data_base_schema" align="center">Initial Data Base Schema</h2>
 
