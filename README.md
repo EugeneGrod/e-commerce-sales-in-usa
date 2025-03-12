@@ -212,7 +212,7 @@ COMMIT TRANSACTION;
 	- **More 3NF Violation:**
 
 		The order_items table contains additional <b>transitive functional dependencies</b>.
-		The `status` and `user_id` columns are <b>not functionally dependent on the primary key</b> (id), but instead on the foreign keys (`order_id`, `user_id`).
+		The `status` and `user_id` columns are <b>not functionally dependent on the primary key</b> (id), but instead on the foreign key (`order_id`).
 		Since we have a foreign key constraint `FK_order_items_users`, we need to drop the constraint before removing these columns.
 		
 		```sql
@@ -229,11 +229,11 @@ COMMIT TRANSACTION;
 	
 		```sql
 		SELECT
-    			f.name AS ForeignKeyName,
-    			OBJECT_NAME(f.parent_object_id) AS TableName,
-				COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
-    			OBJECT_NAME(f.referenced_object_id) AS ReferencedTable,
-    			COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS ReferencedColumn
+    		f.name AS ForeignKeyName,
+			OBJECT_NAME(f.parent_object_id) AS TableName,
+			COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
+    		OBJECT_NAME(f.referenced_object_id) AS ReferencedTable,
+    		COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS ReferencedColumn
 		FROM sys.foreign_keys AS f
 		JOIN sys.foreign_key_columns AS fc ON f.object_id = fc.constraint_object_id
 		WHERE OBJECT_NAME(f.parent_object_id) = 'order_items'
@@ -299,7 +299,7 @@ COMMIT TRANSACTION;
 	- **Bad Schema Design in orders Table:**
 
 		The num_of_item column in orders is redundant and prone to inconsistencies  
-		because the `orders table` has a `one-to-many relationship` with users, while  
+		because the `orders table` has a `many-to-one relationship` with users, while  
 		`order_items` establishes a `many-to-many relationship` between orders and products.  
 		It doesn't track product-specific quantities and duplicates data already available in order_items.  
 		Fixing it by removing num_of_item from orders and adding quantity to order_items for proper tracking.  
@@ -406,6 +406,91 @@ COMMIT TRANSACTION;
 		```
 			
 		![after_removing](Images/tables_normalization/order_items/after_removing.jpg)
+
+- ### `products table:`
+    		
+	- **Addressing Third Normal Form (3NF) Violation:**
+	
+	The products table violates 3NF due to redundancy in the category, brand, and department columns.
+	These columns store non-key attributes that depend on other non-key attributes, leading to data duplication and potential update anomalies.
+	To fix this, we will create separate tables for category, brand, and department, and reference them with foreign keys in the products table,
+	ensuring data consistency and reducing redundancy
+
+	<i>Create separate tables for category, brand, and department to eliminate redundancy</i></br>
+
+	```sql
+	CREATE TABLE categories (
+	id INT PRIMARY KEY IDENTITY(1,1),
+	name VARCHAR(255) UNIQUE NOT NULL);
+
+	CREATE TABLE brands (
+	id INT PRIMARY KEY IDENTITY(1,1),
+	name VARCHAR(255) UNIQUE NOT NULL);
+
+	CREATE TABLE departments (
+	id INT PRIMARY KEY IDENTITY(1,1),
+	name VARCHAR(255) UNIQUE NOT NULL);
+	```
+
+	<i>Populate these tables with unique values extracted from the products table</i></br>
+
+	```sql
+	INSERT INTO categories (name)
+	SELECT DISTINCT category FROM products;
+
+	INSERT INTO brands (name)
+	SELECT DISTINCT brand FROM products;
+
+	INSERT INTO departments (name)
+	SELECT DISTINCT department FROM products;
+	```
+
+	![inserting_unique_values](Images/tables_normalization/products/inserting_unique_values.jpg)
+
+	<i>Add foreign key columns in the products table to reference the new tables</i></br>
+
+	```sql
+	ALTER TABLE products
+	ADD category_id INT,
+	brand_id INT,
+	department_id INT,
+	CONSTRAINT FK__products__categories
+	FOREIGN KEY (category_id) REFERENCES categories(id),
+	CONSTRAINT FK__products__brands
+	FOREIGN KEY (brand_id) REFERENCES brands(id),
+	CONSTRAINT FK__products__departments
+	FOREIGN KEY (department_id) REFERENCES departments(id);
+	```
+
+	<i>Update products table by assigning the appropriate foreign key IDs</i></br>
+
+	```sql
+	UPDATE products
+	SET category_id = c.id
+	FROM products p
+	JOIN categories c ON p.category = c.name;
+
+	UPDATE products
+	SET brand_id = b.id
+	FROM products p
+	JOIN brands b ON p.brand = b.name;
+	
+	UPDATE products
+	SET department_id = d.id
+	FROM products p
+	JOIN departments d ON p.department = d.name;
+	```
+
+	![updating_data](Images/tables_normalization/products/updating_data.jpg)
+
+	<i>Remove the original category, brand, and department columns from the products table</i></br>
+
+	```sql
+	ALTER TABLE products
+	DROP COLUMN category, brand, department;
+	```
+
+	![result](Images/tables_normalization/products/result.jpg)
 
 <h2 id="data-cleaning" align="center">
     <pre>Data Cleaning
