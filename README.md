@@ -24,8 +24,8 @@
 - [Business Problem](#business-problem)
 - [Data Source](#data-source)
 - [Initial Data Base Schema](#initital_data_base_schema)
-- [Final Database Schema](#final_database_schema)
 - [Data Normalization](#database_normalization)
+- [Final Database Schema](#final_database_schema)
 - [Data Cleaning](#data-cleaning)
 - [Data Visualization]
 
