@@ -300,7 +300,7 @@ WHERE TABLE_NAME LIKE 'order_items';
 	DROP COLUMN traffic_source;
 
 -- [events] table
-	-- 3NF Violation
+	-- Addressing Third Normal Form (3NF) Violation:
 		-- Following the products/users table approach, we will modify the existing traffic_source column 
 		-- and separate browser/event_type into new tables, ensuring 3NF compliance and eliminating redundancy.
 
@@ -353,50 +353,4 @@ WHERE TABLE_NAME LIKE 'order_items';
 		event_type;
 
 -- WHAT TO FIX
--- make a documentation about new table 
--- redundancy in events table
 -- BigQuery + check documentation time choise
-
-SELECT TABLE_NAME, COLUMN_NAME
-FROM INFORMATION_SCHEMA.COLUMNS
-
-SELECT COUNT(*) FROM inventory_items;
-SELECT COUNT(*) FROM inventory_items
-WHERE sold_at IS NULL;
-
-SELECT *
-FROM inventory_items
-WHERE product_id = 7615;
-
-SELECT TABLE_NAME, COLUMN_NAME
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME LIKE 'order_items';
-
-SELECT * FROM distribution_centers;
-SELECT TOP 100 * FROM order_items;
-SELECT TOP 100 * FROM products;
-SELECT TOP 0 * FROM products;
-SELECT DISTINCT category FROM products;
-SELECT DISTINCT name FROM products;
-SELECT DISTINCT brand FROM products;
-SELECT DISTINCT department FROM products;
-SELECT COUNT(*) FROM products;
-SELECT * FROM products;
-SELECT name, COUNT(*) AS repeats FROM products
-GROUP BY name
-HAVING COUNT(*) > 1
-ORDER BY repeats DESC;
-SELECT * FROM products
-WHERE name = 'Wrangler Men''s Premium Performance Cowboy Cut Jean';
-
-SELECT * FROM products
-WHERE name = 'HUGO BOSS Men''s Long Pant'
-
-SELECT TOP 0 * FROM products;
-
-SELECT TOP 10 * FROM orders;
-
-SELECT TOP 10 * FROM users;
-SELECT traffic_source, COUNT(*)
-FROM users
-GROUP BY traffic_source

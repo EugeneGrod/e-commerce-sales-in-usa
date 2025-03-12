@@ -24,6 +24,7 @@
 - [Business Problem](#business-problem)
 - [Data Source](#data-source)
 - [Initial Data Base Schema](#initital_data_base_schema)
+- [Final Database Schema](#final_database_schema)
 - [Data Normalization](#database_normalization)
 - [Data Cleaning](#data-cleaning)
 - [Data Visualization]
@@ -577,6 +578,29 @@ COMMIT TRANSACTION;
 		traffic_source,
 		event_type;
 	```
+
+- ### `start_to_end_purchase_events table:`
+
+	A new table, <b>"Start to End Purchase Events"</b> has been introduced to track user sessions from
+	their first interaction with the website to the final purchase. This table allows for the analysis
+	of user behavior, specifically focusing on the average time taken to complete a purchase.
+
+	<b>Table Structure:</b>
+
+	<b>user_id:</b> Identifies the user.<br>
+	<b>session_id:</b> Represents the unique session identifier.<br>
+	<b>start_seq_number:</b> Sequence number for the initial interaction in the session.<br>
+	<b>start_time:</b> Timestamp for the user's first interaction with the website.<br>
+	<b>end_seq_number:</b> Sequence number for the final purchase interaction in the session.<br>
+	<b>purchase_time:</b> Timestamp for the user's final purchase.<br>
+	<b>time_taken:</b> Duration (in seconds) between the start and purchase times, representing the time taken to complete the purchase.<br>
+	
+	<i>This table includes only entries where users visit the website and make a purchase within the same session.</i>
+
+<h2 id="final_database_schema" align="center">Final Database Schema</h2>
+
+![final_schema_part_1](Images/final_schema_part_1.jpg)
+![final_schema_part_2](Images/final_schema_part_2.jpg)
 
 <h2 id="data-cleaning" align="center">
     <pre>Data Cleaning
