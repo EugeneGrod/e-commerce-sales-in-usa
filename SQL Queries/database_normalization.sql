@@ -275,13 +275,13 @@ WHERE TABLE_NAME LIKE 'order_items';
 	DROP COLUMN category, brand, department;
 
 -- [users] table
-	-- 3NF Violation
-		-- We will follow the same normalization process used for the products table—where we separated category,
-		-- brand, and department—to now separate the traffic_source column from the users table into a new traffic_sources table,
-		-- eliminating redundancy and ensuring 3NF compliance.
+	-- Addressing Third Normal Form (3NF) Violation:
+		-- Following the products table approach, we will separate traffic_source into a new traffic_sources table,
+		-- ensuring 3NF compliance and eliminating redundancy.
+
 	CREATE TABLE traffic_sources (
-    id INT PRIMARY KEY IDENTITY(1,1),
-    name VARCHAR(255) UNIQUE NOT NULL);
+	id INT PRIMARY KEY IDENTITY(1,1),
+	name VARCHAR(255) UNIQUE NOT NULL);
 
 	INSERT INTO traffic_sources (name)
 	SELECT DISTINCT traffic_source FROM users;
@@ -298,6 +298,59 @@ WHERE TABLE_NAME LIKE 'order_items';
 	
 	ALTER TABLE users
 	DROP COLUMN traffic_source;
+
+-- [events] table
+	-- 3NF Violation
+		-- Following the products/users table approach, we will modify the existing traffic_source column 
+		-- and separate browser/event_type into new tables, ensuring 3NF compliance and eliminating redundancy.
+
+	CREATE TABLE browsers (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    name VARCHAR(255) UNIQUE NOT NULL);
+
+	CREATE TABLE event_types (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    name VARCHAR(255) UNIQUE NOT NULL);
+
+	INSERT INTO traffic_sources (name)
+	VALUES
+	    ('Adwords'),
+	    ('YouTube');
+
+	INSERT INTO browsers (name)
+	SELECT DISTINCT browser FROM events;
+		
+	INSERT INTO event_types (name)
+	SELECT DISTINCT event_type FROM events;
+
+	ALTER TABLE events
+	ADD browser_id INT,
+	    traffic_source_id INT,
+	    event_type_id INT,
+	    CONSTRAINT FK__events__browsers FOREIGN KEY (browser_id) REFERENCES browsers(id),
+	    CONSTRAINT FK__events__traffic_sources FOREIGN KEY (traffic_source_id) REFERENCES traffic_sources(id),
+	    CONSTRAINT FK__events__event_types FOREIGN KEY (event_type_id) REFERENCES event_types(id);
+
+	UPDATE e
+	SET e.browser_id = b.id
+	FROM events e
+	JOIN browsers b ON e.browser = b.name;
+	
+	UPDATE e
+	SET e.traffic_source_id = t.id
+	FROM events e
+	JOIN traffic_sources t ON e.traffic_source = t.name;
+	
+	UPDATE e
+	SET e.event_type_id = et.id
+	FROM events e
+	JOIN event_types et ON e.event_type = et.name;
+	
+	ALTER TABLE events
+	DROP COLUMN
+		browser,
+		traffic_source,
+		event_type;
 
 -- WHAT TO FIX
 -- make a documentation about new table 
