@@ -492,6 +492,35 @@ COMMIT TRANSACTION;
 
 	![result](Images/tables_normalization/products/result.jpg)
 
+- ### `users table:`
+    		
+	- **Addressing Third Normal Form (3NF) Violation:**
+	
+	<i>Following the products table approach, we will separate traffic_source into a new traffic_sources table,
+	ensuring 3NF compliance and eliminating redundancy.</i></br>
+
+	```sql
+	CREATE TABLE traffic_sources (
+	id INT PRIMARY KEY IDENTITY(1,1),
+	name VARCHAR(255) UNIQUE NOT NULL);
+
+	INSERT INTO traffic_sources (name)
+	SELECT DISTINCT traffic_source FROM users;
+
+	ALTER TABLE users
+	ADD traffic_source_id INT,
+		CONSTRAINT FK__users__traffic_sources
+		FOREIGN KEY (traffic_source_id) REFERENCES traffic_sources(id);
+
+	UPDATE users
+	SET traffic_source_id = t.id
+	FROM users u
+	JOIN traffic_sources t ON u.traffic_source = t.name;
+	
+	ALTER TABLE users
+	DROP COLUMN traffic_source;
+	```
+
 <h2 id="data-cleaning" align="center">
     <pre>Data Cleaning
 Transact-SQL (T-SQL)</pre>

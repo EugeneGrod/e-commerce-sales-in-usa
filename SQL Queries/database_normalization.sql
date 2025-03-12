@@ -274,10 +274,33 @@ WHERE TABLE_NAME LIKE 'order_items';
 	ALTER TABLE products
 	DROP COLUMN category, brand, department;
 
+-- [users] table
+	-- 3NF Violation
+		-- We will follow the same normalization process used for the products table—where we separated category,
+		-- brand, and department—to now separate the traffic_source column from the users table into a new traffic_sources table,
+		-- eliminating redundancy and ensuring 3NF compliance.
+	CREATE TABLE traffic_sources (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    name VARCHAR(255) UNIQUE NOT NULL);
+
+	INSERT INTO traffic_sources (name)
+	SELECT DISTINCT traffic_source FROM users;
+
+	ALTER TABLE users
+	ADD traffic_source_id INT,
+		CONSTRAINT FK__users__traffic_sources
+		FOREIGN KEY (traffic_source_id) REFERENCES traffic_sources(id);
+
+	UPDATE users
+	SET traffic_source_id = t.id
+	FROM users u
+	JOIN traffic_sources t ON u.traffic_source = t.name;
+	
+	ALTER TABLE users
+	DROP COLUMN traffic_source;
 
 -- WHAT TO FIX
 -- make a documentation about new table 
--- add product category table (violation of normalization)
 -- redundancy in events table
 -- BigQuery + check documentation time choise
 
@@ -317,3 +340,10 @@ SELECT * FROM products
 WHERE name = 'HUGO BOSS Men''s Long Pant'
 
 SELECT TOP 0 * FROM products;
+
+SELECT TOP 10 * FROM orders;
+
+SELECT TOP 10 * FROM users;
+SELECT traffic_source, COUNT(*)
+FROM users
+GROUP BY traffic_source
