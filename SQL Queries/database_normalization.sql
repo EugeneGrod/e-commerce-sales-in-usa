@@ -351,6 +351,3 @@ WHERE TABLE_NAME LIKE 'order_items';
 		browser,
 		traffic_source,
 		event_type;
-
--- WHAT TO FIX
--- BigQuery + check documentation time choise
